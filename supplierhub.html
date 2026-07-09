@@ -140,6 +140,7 @@
   }
   .tag.mda { background: #e4ede9; color: var(--mda); }
   .tag.sda { background: #f4e6d8; color: var(--sda); }
+  .tag.cd { background: #e6e4f0; color: #5b4b9e; }
   .contact-name { color: #444038; font-size: 14px; margin-bottom: 6px; }
   .meta-line {
     font-size: 12.5px;
@@ -200,6 +201,118 @@
     .contact-actions { min-width: 0; }
     h1 { font-size: 25px; }
   }
+
+  .add-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    padding: 9px 15px;
+    border-radius: 8px;
+    border: 1px dashed var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
+    cursor: pointer;
+    margin-bottom: 18px;
+    transition: all 0.12s ease;
+  }
+  .add-btn:hover { background: var(--accent); color: white; border-style: solid; }
+  .add-btn svg { width: 14px; height: 14px; stroke: currentColor; }
+
+  .modal-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(28,35,33,0.45);
+    z-index: 50;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: var(--panel);
+    border-radius: 14px;
+    padding: 24px;
+    max-width: 420px;
+    width: 100%;
+    max-height: 88vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  }
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .modal-header h2 { font-size: 18px; margin: 0; }
+  .modal-close {
+    background: none;
+    border: none;
+    font-size: 22px;
+    line-height: 1;
+    color: #8a8578;
+    cursor: pointer;
+    padding: 2px 6px;
+  }
+  .modal-close:hover { color: var(--ink); }
+  #addForm label {
+    display: block;
+    font-size: 12.5px;
+    color: #5b5b52;
+    margin-bottom: 12px;
+    font-family: var(--mono);
+  }
+  #addForm input, #addForm select {
+    display: block;
+    width: 100%;
+    margin-top: 5px;
+    padding: 10px 12px;
+    font-family: var(--sans);
+    font-size: 14px;
+    border: 1.5px solid var(--line);
+    border-radius: 8px;
+    background: var(--paper);
+    color: var(--ink);
+  }
+  #addForm input:focus, #addForm select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 6px;
+  }
+  .btn-primary, .btn-secondary {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    padding: 9px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 1px solid var(--line);
+  }
+  .btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
+  .btn-secondary { background: var(--panel); color: var(--ink); }
+  .btn-primary:hover { opacity: 0.9; }
+  .btn-secondary:hover { border-color: var(--accent); }
+
+  .tag.custom { background: #fbe8e0; color: #b3502f; }
+  .delete-btn {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: #b3502f;
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 2px 0;
+    align-self: flex-start;
+  }
 </style>
 </head>
 <body>
@@ -207,7 +320,7 @@
   <header>
     <p class="eyebrow">SupplierHub &middot; Elgiganten</p>
     <h1>Leverandøropslag</h1>
-    <p class="sub">Søg på leverandør, kontaktperson, mail eller telefon &mdash; alle 84 kontakter fra hvidevare- og småapparat-listerne.</p>
+    <p class="sub">Søg på leverandør, kontaktperson, mail eller telefon &mdash; alle 92 kontakter fra hvidevare-, småapparat- og crossdock-listerne.</p>
   </header>
 
   <div class="search-bar">
@@ -216,10 +329,16 @@
   </div>
 
   <div class="filters" id="filters">
-    <div class="chip active" data-filter="all">Alle</div>
-    <div class="chip" data-filter="MDA (Hvidevarer)">Hvidevarer (MDA)</div>
+    <div class="chip" data-filter="all">Alle</div>
+    <div class="chip active" data-filter="MDA (Hvidevarer)">Hvidevarer (MDA)</div>
     <div class="chip" data-filter="SDA (Småapparater)">Småapparater (SDA)</div>
+    <div class="chip" data-filter="Crossdock">Crossdock / lagerstatus</div>
   </div>
+
+  <button id="addBtn" class="add-btn">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+    Tilføj konsulent
+  </button>
 
   <div class="count-row" id="countRow"></div>
   <div class="results" id="results"></div>
@@ -228,18 +347,75 @@
     <div>Ingen leverandører matcher din søgning</div>
   </div>
 
-  <footer>Data fra Leverandørliste_MDA og Leverandør-kontaktliste_SDA</footer>
+  <footer>Data fra Leverandørliste_MDA og Leverandør-kontaktliste_SDA &middot; Tilføjede konsulenter gemmes lokalt i denne browser</footer>
+</div>
+
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Tilføj konsulent</h2>
+      <button class="modal-close" id="modalClose">&times;</button>
+    </div>
+    <form id="addForm">
+      <label>Leverandør / firma *<input type="text" id="f_leverandor" required placeholder="fx Bosch/Siemens"></label>
+      <label>Kontaktperson<input type="text" id="f_kontakt" placeholder="fx Rikke Hansen"></label>
+      <label>Telefon<input type="text" id="f_tlf" placeholder="fx 24888917"></label>
+      <label>Mail<input type="email" id="f_mail" placeholder="fx rikke@bshg.com"></label>
+      <label>Område / ansvar<input type="text" id="f_omrade" placeholder="fx Sjælland og øerne"></label>
+      <label>Andet relevant<input type="text" id="f_andet" placeholder="valgfrit"></label>
+      <label>Liste
+        <select id="f_liste">
+          <option value="MDA (Hvidevarer)">Hvidevarer (MDA)</option>
+          <option value="SDA (Småapparater)">Småapparater (SDA)</option>
+          <option value="Crossdock">Crossdock / lagerstatus</option>
+        </select>
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" id="modalCancel">Annuller</button>
+        <button type="submit" class="btn-primary">Gem konsulent</button>
+      </div>
+    </form>
+  </div>
 </div>
 
 <script>
-const DATA = [{"leverandor": "Beko Nordic", "brand": "Beko/Whirlpool", "kontakt": "Niels Hunniche", "omrade": "Sjælland og øerne og fyn", "tlf": "24244088", "mail": "niels.hunniche@beko.com", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Beko Nordic", "brand": "Beko/Whirlpool", "kontakt": "Lars Kousgaard", "omrade": "Jylland", "tlf": "29999622", "mail": "lars.kousgaard@beko.com", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "BSH", "brand": "Bosch/Siemens", "kontakt": "Martin Hauerbach", "omrade": "Midt-/Nordjylland", "tlf": "27830113", "mail": "Martin.Hauerbach@bshg.com", "andet": "Area Account Manager", "liste": "MDA (Hvidevarer)"}, {"leverandor": "BSH", "brand": "Bosch/Siemens", "kontakt": "Søren Grøn Stampe", "omrade": "Sydsjælland og øerne og fyn og syd Danmark", "tlf": "27830109", "mail": "Soren.Stampe@bshg.com", "andet": "Area Account Manager", "liste": "MDA (Hvidevarer)"}, {"leverandor": "BSH", "brand": "Bosch/Siemens", "kontakt": "Jan Øland Jacobsen", "omrade": "København/Sjælland", "tlf": "20229328", "mail": "Jan.Jacobsen@bshg.com", "andet": "Area Account Manager", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Ecoflow", "brand": "Ecoflow", "kontakt": "Flemming Dus", "omrade": "DK", "tlf": "+45 30388787", "mail": "fd@boston.dk", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "EICO", "brand": "Eico, Elica, Faber, Vestfrost", "kontakt": "Søren Carstensen", "omrade": "DK", "tlf": "40353312", "mail": "sca@eico.dk", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Electrolux Home Products Denmark A/S", "brand": "Electrolux & AEG", "kontakt": "Gina Scoppa", "omrade": "Sjælland og øerne", "tlf": "0045 22 59 94 45", "mail": "gina.scoppa@electrolux.com", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Electrolux Home Products Denmark A/S", "brand": "Electrolux & AEG", "kontakt": "Jakob Birch Jørgensen", "omrade": "Midt-/Nordjylland", "tlf": "0045 50 75 11 74", "mail": "jakob.jorgensen@electrolux.com", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Electrolux Home Products Denmark A/S", "brand": "Electrolux & AEG", "kontakt": "Lars Lillethorup", "omrade": "Midt- og Sønderjylland", "tlf": "0045 40 14 92 08", "mail": "lars.lillethorup@electrolux.com", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Electrolux Home Products Denmark A/S", "brand": "Electrolux & AEG", "kontakt": "Peter Juul", "omrade": "Fyn, Sjælland og øerne", "tlf": "0045 25 46 91 48", "mail": "peter.juul@electrolux.com", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Franke", "brand": "Franke", "kontakt": "Morten Broberg", "omrade": "DK", "tlf": "+45 21131787", "mail": "Morten.Broberg@franke.com", "andet": "Se også fane med \"Electrolux butiksoversigt\"", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Franke", "brand": "Franke", "kontakt": "Hotline", "omrade": "DK", "tlf": "+46 91240555", "mail": "HS-Elkjop.se@franke.com", "andet": "Se også fane med \"Electrolux butiksoversigt\"", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Gorenje Group Nordic A/S", "brand": "Asko, Hisense, Gorenje", "kontakt": "Mukhtar Popal", "omrade": "Sjælland og øerne og fyn", "tlf": "+45 53511014", "mail": "mp@hisensenordic.com", "andet": "Se også fane med \"Electrolux butiksoversigt\"", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Gorenje Group Nordic A/S", "brand": "Asko, Hisense, Gorenje", "kontakt": "Mehran Thomsen", "omrade": "Jylland", "tlf": "+45 60811394", "mail": "mt@hisensenordic.com", "andet": "Se også fane med \"Electrolux butiksoversigt\"", "liste": "MDA (Hvidevarer)"}, {"leverandor": "GRAM", "brand": "Fuld Sortiment", "kontakt": "Anders Frank Egekvist", "omrade": "Syddanmark og Fyn", "tlf": "24885628", "mail": "ANEG@Gram.dk", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "GRAM", "brand": "Fuld Sortiment", "kontakt": "Bjarne Lundø Møller", "omrade": "Nordjylland", "tlf": "23118385", "mail": "BJAM@Gram.dk", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "GRAM", "brand": "Fuld Sortiment", "kontakt": "Henrik Kongstad Jensen", "omrade": "Sjælland og øerne", "tlf": "30737163", "mail": "HEKJ@Gram.dk", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "LG", "brand": "LG", "kontakt": "Daniel Heer", "omrade": "DK", "tlf": "+45 60435913", "mail": "daniel.heer@lge-nordicteam.com", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "LG", "brand": "LG", "kontakt": "Kenneth Cederqvist", "omrade": "DK", "tlf": "+45 42326992", "mail": "kenneth.cederqvist@lge-nordicteam.com", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Miele", "brand": "Miele", "kontakt": "Nikolaj Holst Hvidberg", "omrade": "Sjælland og øerne", "tlf": "2551127", "mail": "nikolaj.hvidberg@miele.com", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Miele", "brand": "Miele", "kontakt": "William Skotte-Nielsen", "omrade": "Sjælland og øerne og fyn", "tlf": "40576602", "mail": "william.skotte-nielsen@miele.com", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Miele", "brand": "Miele", "kontakt": "Mike Knøss", "omrade": "Midt-/Nordjylland", "tlf": "25511156", "mail": "mike.knoss@miele.com", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Miele", "brand": "Miele", "kontakt": "Søren Harboe", "omrade": "Syd/Midt/Vest Jylland", "tlf": "40576603", "mail": "soren.harboe@miele.com", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Miele", "brand": "Miele", "kontakt": "Uffe Lund", "omrade": "Dk", "tlf": "25511122", "mail": "uffe.lund@miele.com", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Philips Hue", "brand": "Philips Hue", "kontakt": "Brian Sørensen", "omrade": "Midt-/Nordjylland", "tlf": "23875991", "mail": "brian.soerensen@signify.com", "andet": "Field Trainer", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Philips Hue", "brand": "Philips Hue", "kontakt": "Sofie Poulsen", "omrade": "Syd Danmark og Fyn", "tlf": "26473868", "mail": "sofie.poulsen@signify.com", "andet": "Field Trainer", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Philips Hue", "brand": "Philips Hue", "kontakt": "Charlotte Lenander", "omrade": "Sjælland og øerne", "tlf": "30430248", "mail": "charlotte.Lenander@signify.com", "andet": "Salgschef", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Samsung", "brand": "Samsung", "kontakt": "Jan Andersen", "omrade": "Jylland", "tlf": "24 76 04 02", "mail": "jan.andersen@partner.samsung.com", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Samsung", "brand": "Samsung", "kontakt": "Servan Kirkan", "omrade": "Sjælland og øerne og fyn", "tlf": "42 78 37 15", "mail": "S.kirkan@partner.samsung.com", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Scandinavian Appliances", "brand": "Norcool", "kontakt": "Kenneth Lyse", "omrade": "DK", "tlf": "0047 454 33 222", "mail": "kenneth@norcool.no", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Smeg Nordic", "brand": "Smeg", "kontakt": "Ole Carstensen", "omrade": "Jylland", "tlf": "0045 27147492", "mail": "ole.carstemsem@smeg.dk", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Smeg Nordic", "brand": "Smeg", "kontakt": "Thomas Mogensen", "omrade": "Sjælland og øerne og fyn", "tlf": "0045 22724881", "mail": "Thomas.Mogensen@smeg.dk", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Temptech", "brand": "Temptech, La Sommeliere", "kontakt": "Alex Nielsen", "omrade": "Midt-/Nordjylland", "tlf": "51 70 09 36", "mail": "alex@frio-nordics.com", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Thermex", "brand": "Thermex", "kontakt": "Allan Hansen", "omrade": "DK", "tlf": "40323320", "mail": "aha@thermex.dk", "andet": "Area Manager", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Witt", "brand": "Witt, Liebherr, De Dietrich, Brandt, Fisher&Paykel, Insinkerator, Ecotronic", "kontakt": "Nils Hansen", "omrade": "Midt-/Nordjylland", "tlf": "31694674", "mail": "ndh@witt.dk", "andet": "Area Manager", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Witt", "brand": "Witt, Liebherr, De Dietrich, Brandt, Fisher&Paykel, Insinkerator, Ecotronic", "kontakt": "Thomas Frederiksen", "omrade": "Sønderjylland", "tlf": "", "mail": "thf@witt.dk", "andet": "Area Manager", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Witt", "brand": "Witt, Liebherr, De Dietrich, Brandt, Fisher&Paykel, Insinkerator, Ecotronic", "kontakt": "Ture Vester", "omrade": "Sjælland og øerne og fyn", "tlf": "21315551", "mail": "tuv@witt.dk", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Zaptech", "brand": "Zaptech", "kontakt": "Carsten W. Nielsen", "omrade": "DK", "tlf": "31149396", "mail": "carsten.nielsen@Zaptec.com", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Ztove", "brand": "Ztove", "kontakt": "Thomas Mortensen", "omrade": "DK", "tlf": "+45 50547124", "mail": "thomas@ztove.com", "andet": "SMS og TLF 24/7.", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Nilfisk", "brand": "", "kontakt": "Per Chr Hansen", "omrade": "Overordnet kæde kontakt", "tlf": "20236647", "mail": "pchansen@nilfisk.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Nilfisk", "brand": "", "kontakt": "Morten Ekknud", "omrade": "Sjælland & fyn", "tlf": "40200305", "mail": "Morten.ekknud@nilfisk.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Nilfisk", "brand": "", "kontakt": "HC Nielsen", "omrade": "Storkøbenhavn & sjælland", "tlf": "24881003", "mail": "hnielsen@nilfisk.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Nilfisk", "brand": "", "kontakt": "Kim Hald Madsen", "omrade": "Jylland", "tlf": "22327136", "mail": "khmadsen@nilfisk.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Nespresso", "brand": "", "kontakt": "Sannie Bødker Jacobsen", "omrade": "Jylland", "tlf": "26897815", "mail": "sanniebodker.jacobsen@nespresso.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Nespresso", "brand": "", "kontakt": "Jacob Huber", "omrade": "Sjælland/København", "tlf": "26897821", "mail": "jacob.huber@nespresso.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Samsung", "brand": "", "kontakt": "Jan Andersen", "omrade": "Jylland", "tlf": "24760402", "mail": "jan.andersen@partner.samsung.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Samsung", "brand": "", "kontakt": "Servan Kirkan", "omrade": "Sjælland og Fyn", "tlf": "42783715", "mail": "S.kirkan@partner.samsung.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "De'Longhi Scandinavia AB", "brand": "", "kontakt": "Mette Esbjerg", "omrade": "Jylland", "tlf": "53566194", "mail": "mette.esbjerg@external.delonghigroup.com", "andet": "Delonghi, Kenwood, Braun Kitchen, Nutribullet", "liste": "SDA (Småapparater)"}, {"leverandor": "Saphe A/S", "brand": "", "kontakt": "Asger Bendsen", "omrade": "Besøg, Salgsmateriale og salgstræning", "tlf": "22773398", "mail": "asger@saphe.dk", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Saphe A/S", "brand": "", "kontakt": "Support", "omrade": "Support på produkter, opsætning og abb. betaling", "tlf": "42903311", "mail": "support@saphe.dk", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Miele", "brand": "", "kontakt": "Salgs kontor", "omrade": "Hele Danmark", "tlf": "43271410", "mail": "b2bsalg@miele.dk", "andet": "Kontakt vedr. Spørgsmål omkring leveringstider, ordre status, generelle produkt spørgsmål og ved bestilling", "liste": "SDA (Småapparater)"}, {"leverandor": "Miele", "brand": "", "kontakt": "Service", "omrade": "Hele Danmark", "tlf": "43271410", "mail": "b2bservice@miele.dk", "andet": "Kontakt vedr. Alle service spørgsmål, bookninger og status på service sager", "liste": "SDA (Småapparater)"}, {"leverandor": "Miele", "brand": "", "kontakt": "Mike", "omrade": "Midt/nordjylland", "tlf": "25511156", "mail": "mike.knoss@miele.com", "andet": "Gælder produktgrupperne: Airfryers, kaffemaskiner og støvsugere", "liste": "SDA (Småapparater)"}, {"leverandor": "Miele", "brand": "", "kontakt": "Søren", "omrade": "Midt/sønderjylland", "tlf": "40576603", "mail": "soren.harboe@miele.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Miele", "brand": "", "kontakt": "Alexander", "omrade": "Sjælland, Fyn og Øerne", "tlf": "40576602", "mail": "alexander.vigso@miele.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Miele", "brand": "", "kontakt": "Nikolaj", "omrade": "Sjælland, Fyn og Øerne", "tlf": "25511127", "mail": "nikolaj.hvidberg@miele.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Wilfa", "brand": "", "kontakt": "Søren Lundberg", "omrade": "Hele Danmark", "tlf": "40203115", "mail": "swl@wilfa.dk", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Wilfa", "brand": "", "kontakt": "Thomas Snor Korreborg", "omrade": "Hele Danmark", "tlf": "40630907", "mail": "thomas.korreborg@wilfa.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Dreame", "brand": "", "kontakt": "Kevin Sjöstrand", "omrade": "Produktkunskap, utbildning, butiksexponering", "tlf": "46703659436", "mail": "kevinsjostrand@dreame.tech", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Dreame", "brand": "", "kontakt": "Mikael De Basso", "omrade": "Övergripande ansvar, kampanjplanering, leveranser", "tlf": "46733880749", "mail": "mikaeldebasso@dreame.tech", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Sugro", "brand": "", "kontakt": "Martin Faber", "omrade": "Drikkevarer", "tlf": "51468027", "mail": "martin.faber@sugro.dk", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "BSH Hvidevarer A/S", "brand": "", "kontakt": "Søren Stampe", "omrade": "Area account Manager Fyn/Sydjylland/Sydsjælland", "tlf": "27830109", "mail": "Soren.stampe@bshg.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "BSH Hvidevarer A/S", "brand": "", "kontakt": "Jan Øland Jacobsen", "omrade": "Area account Manager Nordsjælland/København", "tlf": "20229328", "mail": "Jan.jacobsen@bshg.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "BSH Hvidevarer A/S", "brand": "", "kontakt": "Martin Hauerbach Vestergård", "omrade": "Area account Manager Midt-Nordjylland", "tlf": "27830113", "mail": "Martin.hauerbach@bshg.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Dyson", "brand": "", "kontakt": "Jens Toke Mariager", "omrade": "Danmark", "tlf": "28684645", "mail": "jens.toke.mariager@dyson.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Witt A/S", "brand": "", "kontakt": "Mathias Hausager", "omrade": "Jylland", "tlf": "40124280", "mail": "mha@witt.dk", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Witt A/S", "brand": "", "kontakt": "Lars Hviid Christensen", "omrade": "Sjælland/Fyn", "tlf": "91898191", "mail": "lhc@witt.dk", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Philips Versuni", "brand": "", "kontakt": "Anniken Dehli", "omrade": "Norden", "tlf": "", "mail": "anniken.dehli@versuni.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "P&G", "brand": "", "kontakt": "Alexander Ivarsson", "omrade": "Nordjylland", "tlf": "40 84 59 96", "mail": "ivarsson.a@pg.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "P&G", "brand": "", "kontakt": "Carin Jungholm", "omrade": "Midtjylland", "tlf": "22 59 94 48", "mail": "jungholm.c@pg.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Ecovacs", "brand": "", "kontakt": "Tommy Limnell Holm", "omrade": "Sønderjylland/Fyn/Sydsjælland", "tlf": "40 14 92 08", "mail": "t.holm@ecovacs.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Jura", "brand": "", "kontakt": "Adam", "omrade": "Fyn/Sjælland Vest", "tlf": "25 46 91 48", "mail": "aha@coffeesystem.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Jura", "brand": "", "kontakt": "Leo", "omrade": "Sjælland Øst", "tlf": "22 45 49 11", "mail": "lvj@coffeesystem.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Electrolux", "brand": "", "kontakt": "Michael Trampedach", "omrade": "Jylland", "tlf": "28 11 21 16", "mail": "michael.trampedach@electrolux.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Electrolux", "brand": "", "kontakt": "Andreas Rasmussen", "omrade": "", "tlf": "", "mail": "andreas.rasmussen@electorlux.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Electrolux", "brand": "", "kontakt": "Lars Lillethorup", "omrade": "", "tlf": "", "mail": "lars.lillethorup@electrolux.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Electrolux", "brand": "", "kontakt": "Peter Juul", "omrade": "", "tlf": "", "mail": "peter.juul@electrolux.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Electrolux", "brand": "", "kontakt": "Olav Sørensen", "omrade": "", "tlf": "", "mail": "olav.sorensen@electrolux.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Xiaomi", "brand": "", "kontakt": "Michael Holm", "omrade": "", "tlf": "", "mail": "Michael.xiaomi@nrgnordic.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Roborock", "brand": "", "kontakt": "Alvin Rexhepi", "omrade": "", "tlf": "", "mail": "alvin.rexhepi@roborock.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Woods", "brand": "", "kontakt": "Trine Lassen", "omrade": "", "tlf": "", "mail": "trine@woods.se", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Shark/Ninja", "brand": "", "kontakt": "Kjetil Mikkelborg", "omrade": "", "tlf": "", "mail": "Kjetil.Mikkelborg@sharkninja.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Roborock", "brand": "", "kontakt": "Dennis Jacobsen", "omrade": "", "tlf": "31345268", "mail": "dennis-ff@roborock.com", "andet": "", "liste": "SDA (Småapparater)"}];
+const DATA = [{"leverandor": "Beko Nordic", "brand": "Beko/Whirlpool", "kontakt": "Niels Hunniche", "omrade": "Sjælland og øerne og fyn", "tlf": "24244088", "mail": "niels.hunniche@beko.com", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Beko Nordic", "brand": "Beko/Whirlpool", "kontakt": "Lars Kousgaard", "omrade": "Jylland", "tlf": "29999622", "mail": "lars.kousgaard@beko.com", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "BSH", "brand": "Bosch/Siemens", "kontakt": "Martin Hauerbach", "omrade": "Midt-/Nordjylland", "tlf": "27830113", "mail": "Martin.Hauerbach@bshg.com", "andet": "Area Account Manager", "liste": "MDA (Hvidevarer)"}, {"leverandor": "BSH", "brand": "Bosch/Siemens", "kontakt": "Søren Grøn Stampe", "omrade": "Sydsjælland og øerne og fyn og syd Danmark", "tlf": "27830109", "mail": "Soren.Stampe@bshg.com", "andet": "Area Account Manager", "liste": "MDA (Hvidevarer)"}, {"leverandor": "BSH", "brand": "Bosch/Siemens", "kontakt": "Jan Øland Jacobsen", "omrade": "København/Sjælland", "tlf": "20229328", "mail": "Jan.Jacobsen@bshg.com", "andet": "Area Account Manager", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Ecoflow", "brand": "Ecoflow", "kontakt": "Flemming Dus", "omrade": "DK", "tlf": "+45 30388787", "mail": "fd@boston.dk", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "EICO", "brand": "Eico, Elica, Faber, Vestfrost", "kontakt": "Søren Carstensen", "omrade": "DK", "tlf": "40353312", "mail": "sca@eico.dk", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Electrolux Home Products Denmark A/S", "brand": "Electrolux & AEG", "kontakt": "Gina Scoppa", "omrade": "Sjælland og øerne", "tlf": "0045 22 59 94 45", "mail": "gina.scoppa@electrolux.com", "andet": "Se også fane med \"Electrolux butiksoversigt\"", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Electrolux Home Products Denmark A/S", "brand": "Electrolux & AEG", "kontakt": "Jakob Birch Jørgensen", "omrade": "Midt-/Nordjylland", "tlf": "0045 50 75 11 74", "mail": "jakob.jorgensen@electrolux.com", "andet": "Se også fane med \"Electrolux butiksoversigt\"", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Electrolux Home Products Denmark A/S", "brand": "Electrolux & AEG", "kontakt": "Lars Lillethorup", "omrade": "Midt- og Sønderjylland", "tlf": "0045 40 14 92 08", "mail": "lars.lillethorup@electrolux.com", "andet": "Se også fane med \"Electrolux butiksoversigt\"", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Electrolux Home Products Denmark A/S", "brand": "Electrolux & AEG", "kontakt": "Peter Juul", "omrade": "Fyn, Sjælland og øerne", "tlf": "0045 25 46 91 48", "mail": "peter.juul@electrolux.com", "andet": "Se også fane med \"Electrolux butiksoversigt\"", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Franke", "brand": "Franke", "kontakt": "Morten Broberg", "omrade": "DK", "tlf": "+45 21131787", "mail": "Morten.Broberg@franke.com", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Franke", "brand": "Franke", "kontakt": "Hotline", "omrade": "DK", "tlf": "+46 91240555", "mail": "HS-Elkjop.se@franke.com", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Gorenje Group Nordic A/S", "brand": "Asko, Hisense, Gorenje", "kontakt": "Mukhtar Popal", "omrade": "Sjælland og øerne og fyn", "tlf": "+45 53511014", "mail": "mp@hisensenordic.com", "andet": "Field Trainer", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Gorenje Group Nordic A/S", "brand": "Asko, Hisense, Gorenje", "kontakt": "Mehran Thomsen", "omrade": "Jylland", "tlf": "+45 60811394", "mail": "mt@hisensenordic.com", "andet": "Field Trainer", "liste": "MDA (Hvidevarer)"}, {"leverandor": "GRAM", "brand": "Fuld Sortiment", "kontakt": "Anders Frank Egekvist", "omrade": "Syddanmark og Fyn", "tlf": "24885628", "mail": "ANEG@Gram.dk", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "GRAM", "brand": "Fuld Sortiment", "kontakt": "Bjarne Lundø Møller", "omrade": "Nordjylland", "tlf": "23118385", "mail": "BJAM@Gram.dk", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "GRAM", "brand": "Fuld Sortiment", "kontakt": "Henrik Kongstad Jensen", "omrade": "Sjælland og øerne", "tlf": "30737163", "mail": "HEKJ@Gram.dk", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "LG", "brand": "LG", "kontakt": "Daniel Heer", "omrade": "DK", "tlf": "+45 60435913", "mail": "daniel.heer@lge-nordicteam.com", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "LG", "brand": "LG", "kontakt": "Kenneth Cederqvist", "omrade": "DK", "tlf": "+45 42326992", "mail": "kenneth.cederqvist@lge-nordicteam.com", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Miele", "brand": "Miele", "kontakt": "Nikolaj Holst Hvidberg", "omrade": "Sjælland og øerne", "tlf": "2551127", "mail": "nikolaj.hvidberg@miele.com", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Miele", "brand": "Miele", "kontakt": "William Skotte-Nielsen", "omrade": "Sjælland og øerne og fyn", "tlf": "40576602", "mail": "william.skotte-nielsen@miele.com", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Miele", "brand": "Miele", "kontakt": "Mike Knøss", "omrade": "Midt-/Nordjylland", "tlf": "25511156", "mail": "mike.knoss@miele.com", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Miele", "brand": "Miele", "kontakt": "Søren Harboe", "omrade": "Syd/Midt/Vest Jylland", "tlf": "40576603", "mail": "soren.harboe@miele.com", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Miele", "brand": "Miele", "kontakt": "Uffe Lund", "omrade": "Dk", "tlf": "25511122", "mail": "uffe.lund@miele.com", "andet": "Salgschef", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Philips Hue", "brand": "Philips Hue", "kontakt": "Brian Sørensen", "omrade": "Midt-/Nordjylland", "tlf": "23875991", "mail": "brian.soerensen@signify.com", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Philips Hue", "brand": "Philips Hue", "kontakt": "Sofie Poulsen", "omrade": "Syd Danmark og Fyn", "tlf": "26473868", "mail": "sofie.poulsen@signify.com", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Philips Hue", "brand": "Philips Hue", "kontakt": "Charlotte Lenander", "omrade": "Sjælland og øerne", "tlf": "30430248", "mail": "charlotte.Lenander@signify.com", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Samsung", "brand": "Samsung", "kontakt": "Jan Andersen", "omrade": "Jylland", "tlf": "24 76 04 02", "mail": "jan.andersen@partner.samsung.com", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Samsung", "brand": "Samsung", "kontakt": "Servan Kirkan", "omrade": "Sjælland og øerne og fyn", "tlf": "42 78 37 15", "mail": "S.kirkan@partner.samsung.com", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Scandinavian Appliances", "brand": "Norcool", "kontakt": "Kenneth Lyse", "omrade": "DK", "tlf": "0047 454 33 222", "mail": "kenneth@norcool.no", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Smeg Nordic", "brand": "Smeg", "kontakt": "Ole Carstensen", "omrade": "Jylland", "tlf": "0045 27147492", "mail": "ole.carstemsem@smeg.dk", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Smeg Nordic", "brand": "Smeg", "kontakt": "Thomas Mogensen", "omrade": "Sjælland og øerne og fyn", "tlf": "0045 22724881", "mail": "Thomas.Mogensen@smeg.dk", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Temptech", "brand": "Temptech, La Sommeliere", "kontakt": "Alex Nielsen", "omrade": "Midt-/Nordjylland", "tlf": "51 70 09 36", "mail": "alex@frio-nordics.com", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Thermex", "brand": "Thermex", "kontakt": "Allan Hansen", "omrade": "DK", "tlf": "40323320", "mail": "aha@thermex.dk", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Witt", "brand": "Witt, Liebherr, De Dietrich, Brandt, Fisher&Paykel, Insinkerator, Ecotronic", "kontakt": "Nils Hansen", "omrade": "Midt-/Nordjylland", "tlf": "31694674", "mail": "ndh@witt.dk", "andet": "Area Manager", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Witt", "brand": "Witt, Liebherr, De Dietrich, Brandt, Fisher&Paykel, Insinkerator, Ecotronic", "kontakt": "Thomas Frederiksen", "omrade": "Sønderjylland", "tlf": "40124404", "mail": "thf@witt.dk", "andet": "Area Manager", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Witt", "brand": "Witt, Liebherr, De Dietrich, Brandt, Fisher&Paykel, Insinkerator, Ecotronic", "kontakt": "Ture Vester", "omrade": "Sjælland og øerne og fyn", "tlf": "21315551", "mail": "tuv@witt.dk", "andet": "Area Manager", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Zaptech", "brand": "Zaptech", "kontakt": "Carsten W. Nielsen", "omrade": "DK", "tlf": "31149396", "mail": "carsten.nielsen@Zaptec.com", "andet": "", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Ztove", "brand": "Ztove", "kontakt": "Thomas Mortensen", "omrade": "DK", "tlf": "+45 50547124", "mail": "thomas@ztove.com", "andet": "SMS og TLF 24/7.", "liste": "MDA (Hvidevarer)"}, {"leverandor": "Electrolux Home Products Denmark A/S", "brand": "Electrolux & AEG", "kontakt": "Crossdock kontakt", "omrade": "Lagerstatus / leveringstid (ikke specifik ordrestatus)", "tlf": "", "mail": "Crossdock@electrolux.com", "andet": "", "liste": "Crossdock"}, {"leverandor": "BSH", "brand": "Bosch/Siemens", "kontakt": "Crossdock kontakt", "omrade": "Lagerstatus / leveringstid (ikke specifik ordrestatus)", "tlf": "", "mail": "STH-XD-Elkjop@bshg.com", "andet": "", "liste": "Crossdock"}, {"leverandor": "Samsung", "brand": "Samsung", "kontakt": "Crossdock kontakt", "omrade": "Lagerstatus / leveringstid (ikke specifik ordrestatus)", "tlf": "", "mail": "order@samsung.se", "andet": "", "liste": "Crossdock"}, {"leverandor": "Temptech", "brand": "Temptech", "kontakt": "Crossdock kontakt", "omrade": "Lagerstatus / leveringstid (ikke specifik ordrestatus)", "tlf": "", "mail": "crossdock@temptech.no", "andet": "", "liste": "Crossdock"}, {"leverandor": "Franke", "brand": "Franke", "kontakt": "Crossdock kontakt", "omrade": "Lagerstatus / leveringstid (ikke specifik ordrestatus)", "tlf": "", "mail": "HS-Elkjop.SE@franke.com", "andet": "", "liste": "Crossdock"}, {"leverandor": "Miele", "brand": "Miele", "kontakt": "Crossdock kontakt", "omrade": "Lagerstatus / leveringstid (ikke specifik ordrestatus)", "tlf": "", "mail": "keyaccount.norb@miele.email", "andet": "", "liste": "Crossdock"}, {"leverandor": "Gorenje Group Nordic A/S", "brand": "Asko, Hisense, Gorenje", "kontakt": "Crossdock kontakt", "omrade": "Lagerstatus / leveringstid (ikke specifik ordrestatus)", "tlf": "", "mail": "kundeservice@gorenjegroup.com", "andet": "", "liste": "Crossdock"}, {"leverandor": "Nilfisk", "brand": "", "kontakt": "Per Chr Hansen", "omrade": "Overordnet kæde kontakt", "tlf": "20236647", "mail": "pchansen@nilfisk.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Nilfisk", "brand": "", "kontakt": "Morten Ekknud", "omrade": "Sjælland & fyn", "tlf": "40200305", "mail": "Morten.ekknud@nilfisk.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Nilfisk", "brand": "", "kontakt": "HC Nielsen", "omrade": "Storkøbenhavn & sjælland", "tlf": "24881003", "mail": "hnielsen@nilfisk.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Nilfisk", "brand": "", "kontakt": "Kim Hald Madsen", "omrade": "Jylland", "tlf": "22327136", "mail": "khmadsen@nilfisk.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Nespresso", "brand": "", "kontakt": "Sannie Bødker Jacobsen", "omrade": "Jylland", "tlf": "26897815", "mail": "sanniebodker.jacobsen@nespresso.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Nespresso", "brand": "", "kontakt": "Jacob Huber", "omrade": "Sjælland/København", "tlf": "26897821", "mail": "jacob.huber@nespresso.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Samsung", "brand": "", "kontakt": "Jan Andersen", "omrade": "Jylland", "tlf": "24760402", "mail": "jan.andersen@partner.samsung.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Samsung", "brand": "", "kontakt": "Servan Kirkan", "omrade": "Sjælland og Fyn", "tlf": "42783715", "mail": "S.kirkan@partner.samsung.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "De'Longhi Scandinavia AB", "brand": "", "kontakt": "Mette Esbjerg", "omrade": "Jylland", "tlf": "53566194", "mail": "mette.esbjerg@external.delonghigroup.com", "andet": "Delonghi, Kenwood, Braun Kitchen, Nutribullet", "liste": "SDA (Småapparater)"}, {"leverandor": "Saphe A/S", "brand": "", "kontakt": "Asger Bendsen", "omrade": "Besøg, Salgsmateriale og salgstræning", "tlf": "22773398", "mail": "asger@saphe.dk", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Saphe A/S", "brand": "", "kontakt": "Support", "omrade": "Support på produkter, opsætning og abb. betaling", "tlf": "42903311", "mail": "support@saphe.dk", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Miele", "brand": "", "kontakt": "Salgs kontor", "omrade": "Hele Danmark", "tlf": "43271410", "mail": "b2bsalg@miele.dk", "andet": "Kontakt vedr. Spørgsmål omkring leveringstider, ordre status, generelle produkt spørgsmål og ved bestilling", "liste": "SDA (Småapparater)"}, {"leverandor": "Miele", "brand": "", "kontakt": "Service", "omrade": "Hele Danmark", "tlf": "43271410", "mail": "b2bservice@miele.dk", "andet": "Kontakt vedr. Alle service spørgsmål, bookninger og status på service sager", "liste": "SDA (Småapparater)"}, {"leverandor": "Miele", "brand": "", "kontakt": "Mike", "omrade": "Midt/nordjylland", "tlf": "25511156", "mail": "mike.knoss@miele.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Miele", "brand": "", "kontakt": "Søren", "omrade": "Midt/sønderjylland", "tlf": "40576603", "mail": "soren.harboe@miele.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Miele", "brand": "", "kontakt": "Alexander", "omrade": "Sjælland, Fyn og Øerne", "tlf": "40576602", "mail": "alexander.vigso@miele.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Miele", "brand": "", "kontakt": "Nikolaj", "omrade": "Sjælland, Fyn og Øerne", "tlf": "25511127", "mail": "nikolaj.hvidberg@miele.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Wilfa", "brand": "", "kontakt": "Søren Lundberg", "omrade": "Hele Danmark", "tlf": "40203115", "mail": "swl@wilfa.dk", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Wilfa", "brand": "", "kontakt": "Thomas Snor Korreborg", "omrade": "Hele Danmark", "tlf": "40630907", "mail": "thomas.korreborg@wilfa.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Dreame", "brand": "", "kontakt": "Kevin Sjöstrand", "omrade": "Produktkunskap, utbildning, butiksexponering", "tlf": "46703659436", "mail": "kevinsjostrand@dreame.tech", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Dreame", "brand": "", "kontakt": "Mikael De Basso", "omrade": "Övergripande ansvar, kampanjplanering, leveranser", "tlf": "46733880749", "mail": "mikaeldebasso@dreame.tech", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Sugro", "brand": "", "kontakt": "Martin Faber", "omrade": "Drikkevarer", "tlf": "51468027", "mail": "martin.faber@sugro.dk", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "BSH Hvidevarer A/S", "brand": "", "kontakt": "Søren Stampe", "omrade": "Area account Manager Fyn/Sydjylland/Sydsjælland", "tlf": "27830109", "mail": "Soren.stampe@bshg.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "BSH Hvidevarer A/S", "brand": "", "kontakt": "Jan Øland Jacobsen", "omrade": "Area account Manager Nordsjælland/København", "tlf": "20229328", "mail": "Jan.jacobsen@bshg.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "BSH Hvidevarer A/S", "brand": "", "kontakt": "Martin Hauerbach Vestergård", "omrade": "Area account Manager Midt-Nordjylland", "tlf": "27830113", "mail": "Martin.hauerbach@bshg.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Dyson", "brand": "", "kontakt": "Jens Toke Mariager", "omrade": "Danmark", "tlf": "28684645", "mail": "jens.toke.mariager@dyson.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Witt A/S", "brand": "", "kontakt": "Mathias Hausager", "omrade": "Jylland", "tlf": "40124280", "mail": "mha@witt.dk", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Witt A/S", "brand": "", "kontakt": "Lars Hviid Christensen", "omrade": "Sjælland/Fyn", "tlf": "91898191", "mail": "lhc@witt.dk", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Philips Versuni", "brand": "", "kontakt": "", "omrade": "", "tlf": "", "mail": "anniken.dehli@versuni.com", "andet": "Gælder produktgrupperne: Airfryers, kaffemaskiner og støvsugere", "liste": "SDA (Småapparater)"}, {"leverandor": "P&G", "brand": "", "kontakt": "Alexander Ivarsson", "omrade": "", "tlf": "", "mail": "ivarsson.a@pg.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "P&G", "brand": "", "kontakt": "Carin Jungholm", "omrade": "", "tlf": "", "mail": "jungholm.c@pg.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Ecovacs", "brand": "", "kontakt": "Tommy Limnell Holm", "omrade": "Norden", "tlf": "", "mail": "t.holm@ecovacs.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Jura", "brand": "", "kontakt": "Adam", "omrade": "", "tlf": "", "mail": "aha@coffeesystem.com", "andet": "Salg", "liste": "SDA (Småapparater)"}, {"leverandor": "Jura", "brand": "", "kontakt": "Leo", "omrade": "", "tlf": "", "mail": "lvj@coffeesystem.com", "andet": "Salg", "liste": "SDA (Småapparater)"}, {"leverandor": "Electrolux", "brand": "", "kontakt": "Michael Trampedach", "omrade": "Nordjylland", "tlf": "40 84 59 96", "mail": "michael.trampedach@electrolux.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Electrolux", "brand": "", "kontakt": "Andreas Rasmussen", "omrade": "Midtjylland", "tlf": "22 59 94 48", "mail": "andreas.rasmussen@electorlux.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Electrolux", "brand": "", "kontakt": "Lars Lillethorup", "omrade": "Sønderjylland/Fyn/Sydsjælland", "tlf": "40 14 92 08", "mail": "lars.lillethorup@electrolux.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Electrolux", "brand": "", "kontakt": "Peter Juul", "omrade": "Fyn/Sjælland Vest", "tlf": "25 46 91 48", "mail": "peter.juul@electrolux.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Electrolux", "brand": "", "kontakt": "Olav Sørensen", "omrade": "Sjælland Øst", "tlf": "22 45 49 11", "mail": "olav.sorensen@electrolux.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Xiaomi", "brand": "", "kontakt": "Michael Holm", "omrade": "Jylland", "tlf": "28 11 21 16", "mail": "Michael.xiaomi@nrgnordic.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Roborock", "brand": "", "kontakt": "Alvin Rexhepi", "omrade": "", "tlf": "", "mail": "alvin.rexhepi@roborock.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Woods", "brand": "", "kontakt": "Trine Lassen", "omrade": "", "tlf": "", "mail": "trine@woods.se", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Shark/Ninja", "brand": "", "kontakt": "Kjetil Mikkelborg", "omrade": "Shark / Ninja", "tlf": "", "mail": "Kjetil.Mikkelborg@sharkninja.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "Roborock", "brand": "", "kontakt": "Dennis Jacobsen", "omrade": "", "tlf": "31345268", "mail": "dennis-ff@roborock.com", "andet": "", "liste": "SDA (Småapparater)"}, {"leverandor": "BSH Hvidevarer A/S", "brand": "", "kontakt": "Rikke", "omrade": "", "tlf": "24888917", "mail": "", "andet": "", "liste": "SDA (Småapparater)"}];
 
 const searchInput = document.getElementById('searchInput');
 const resultsEl = document.getElementById('results');
 const countRow = document.getElementById('countRow');
 const emptyState = document.getElementById('emptyState');
 const filters = document.getElementById('filters');
-let activeFilter = 'all';
+const addBtn = document.getElementById('addBtn');
+const modalBackdrop = document.getElementById('modalBackdrop');
+const modalClose = document.getElementById('modalClose');
+const modalCancel = document.getElementById('modalCancel');
+const addForm = document.getElementById('addForm');
+
+let activeFilter = 'MDA (Hvidevarer)';
+let customContacts = [];
+
+function loadCustomContacts() {
+  try {
+    const raw = localStorage.getItem('supplierhub_custom_contacts');
+    customContacts = raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    customContacts = [];
+  }
+  render();
+}
+
+function saveCustomContacts() {
+  try {
+    localStorage.setItem('supplierhub_custom_contacts', JSON.stringify(customContacts));
+  } catch (e) {
+    console.error('Kunne ikke gemme', e);
+  }
+}
+
+function allData() {
+  return DATA.concat(customContacts);
+}
 
 function escapeHtml(s) {
   return (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -255,7 +431,7 @@ function highlight(text, q) {
 
 function render() {
   const q = searchInput.value.trim().toLowerCase();
-  let items = DATA.filter(r => activeFilter === 'all' || r.liste === activeFilter);
+  let items = allData().filter(r => activeFilter === 'all' || r.liste === activeFilter);
 
   if (q) {
     items = items.filter(r =>
@@ -278,8 +454,9 @@ function render() {
   emptyState.style.display = 'none';
 
   resultsEl.innerHTML = items.map((r, i) => {
-    const tagClass = r.liste.startsWith('MDA') ? 'mda' : 'sda';
-    const tagLabel = r.liste.startsWith('MDA') ? 'Hvidevarer' : 'Småapparater';
+    const isCustom = !!r._custom;
+    const tagClass = isCustom ? 'custom' : (r.liste.startsWith('MDA') ? 'mda' : (r.liste === 'Crossdock' ? 'cd' : 'sda'));
+    const tagLabel = isCustom ? 'Tilføjet' : (r.liste.startsWith('MDA') ? 'Hvidevarer' : (r.liste === 'Crossdock' ? 'Crossdock' : 'Småapparater'));
     return `
       <div class="card">
         <div class="card-main">
@@ -291,6 +468,7 @@ function render() {
           <div class="contact-name">${highlight(r.kontakt, q) || '<span class="no-data">Ingen kontaktperson angivet</span>'}</div>
           ${r.omrade ? `<div class="meta-line">📍 ${escapeHtml(r.omrade)}</div>` : ''}
           ${r.andet ? `<div class="meta-line">${escapeHtml(r.andet)}</div>` : ''}
+          ${isCustom ? `<button class="delete-btn" data-custom-id="${r._id}">Slet</button>` : ''}
         </div>
         <div class="contact-actions">
           ${r.tlf ? `<a class="contact-btn" href="tel:${escapeHtml(r.tlf.replace(/\s/g,''))}" data-copy="${escapeHtml(r.tlf)}" data-type="tlf">
@@ -310,6 +488,15 @@ function render() {
     btn.addEventListener('click', (e) => {
       if (btn.tagName === 'A' && btn.dataset.type === 'tlf') return; // let tel: link work, but also copy
       navigator.clipboard.writeText(btn.dataset.copy).then(() => flashCopied(btn));
+    });
+  });
+
+  document.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.customId;
+      customContacts = customContacts.filter(c => c._id !== id);
+      saveCustomContacts();
+      render();
     });
   });
 }
@@ -332,7 +519,36 @@ filters.addEventListener('click', (e) => {
   render();
 });
 
-render();
+function openModal() { modalBackdrop.classList.add('open'); document.getElementById('f_leverandor').focus(); }
+function closeModal() { modalBackdrop.classList.remove('open'); addForm.reset(); }
+
+addBtn.addEventListener('click', openModal);
+modalClose.addEventListener('click', closeModal);
+modalCancel.addEventListener('click', closeModal);
+modalBackdrop.addEventListener('click', (e) => { if (e.target === modalBackdrop) closeModal(); });
+
+addForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const entry = {
+    _custom: true,
+    _id: 'c_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+    leverandor: document.getElementById('f_leverandor').value.trim(),
+    brand: '',
+    kontakt: document.getElementById('f_kontakt').value.trim(),
+    omrade: document.getElementById('f_omrade').value.trim(),
+    tlf: document.getElementById('f_tlf').value.trim(),
+    mail: document.getElementById('f_mail').value.trim(),
+    andet: document.getElementById('f_andet').value.trim(),
+    liste: document.getElementById('f_liste').value
+  };
+  if (!entry.leverandor) return;
+  customContacts.push(entry);
+  saveCustomContacts();
+  closeModal();
+  render();
+});
+
+loadCustomContacts();
 </script>
 </body>
 </html>
